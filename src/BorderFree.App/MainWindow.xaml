@@ -1,0 +1,309 @@
+<Window x:Class="BorderFree.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:layout="clr-namespace:BorderFree.Core.Layout;assembly=BorderFree.Core"
+        Title="BorderFree"
+        Width="1000"
+        Height="760"
+        MinWidth="880"
+        MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource InkBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="Segoe UI"
+        FontSize="13"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
+        TextOptions.TextFormattingMode="Display"
+        Icon="Assets/BorderFree.ico">
+  <DockPanel>
+    <Border DockPanel.Dock="Bottom" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="28,12">
+      <TextBlock Text="{Binding StatusText}" TextWrapping="Wrap">
+        <TextBlock.Style>
+          <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding StatusTone}" Value="Success">
+                <Setter Property="Foreground" Value="{StaticResource OkBrush}"/>
+              </DataTrigger>
+              <DataTrigger Binding="{Binding StatusTone}" Value="Error">
+                <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </TextBlock.Style>
+      </TextBlock>
+    </Border>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="28,22,22,18">
+      <StackPanel>
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <Grid Width="46" Height="28" Margin="0,2,14,0" VerticalAlignment="Center">
+            <Border BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" Height="14" VerticalAlignment="Center"/>
+            <Border Background="{StaticResource AccentBrush}" Width="22" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+          </Grid>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center">
+            <TextBlock Text="BorderFree" FontSize="22" FontWeight="SemiBold"/>
+            <TextBlock Text="Borderless layouts for 32:9 monitors." Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0"/>
+          </StackPanel>
+        </Grid>
+
+        <Grid Margin="0,22,6,0">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.05*"/>
+            <ColumnDefinition Width="28"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Grid.Column="0">
+            <Grid Margin="0,0,0,8">
+              <TextBlock Text="Windows" Style="{StaticResource SectionLabel}" Margin="0"/>
+              <Button Content="Refresh" Command="{Binding RefreshCommand}" Style="{StaticResource QuietButton}" HorizontalAlignment="Right" Padding="10,4" Margin="0,-6,0,0"/>
+            </Grid>
+            <Grid>
+              <TextBox Text="{Binding FilterText, UpdateSourceTrigger=PropertyChanged}" />
+              <TextBlock Text="Filter by program or title"
+                         IsHitTestVisible="False"
+                         Margin="12,0,0,0"
+                         VerticalAlignment="Center"
+                         Foreground="{StaticResource FaintBrush}"
+                         Visibility="{Binding HasFilterText, Converter={StaticResource InverseBool}}"/>
+            </Grid>
+            <Border Margin="0,10,0,0" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource LineBrush}" BorderThickness="1" Height="292">
+              <Grid>
+                <ListBox ItemsSource="{Binding WindowsView}"
+                         SelectedItem="{Binding SelectedWindow}"
+                         BorderThickness="0"
+                         Background="Transparent">
+                  <ListBox.ItemTemplate>
+                    <DataTemplate>
+                      <StackPanel ToolTip="{Binding ExecutablePath}">
+                        <TextBlock Text="{Binding DisplayExe}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding DisplayTitle}" Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock Text="{Binding WindowListMessage}"
+                           Visibility="{Binding ShowWindowListMessage, Converter={StaticResource BoolToVis}}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           Margin="24"
+                           Foreground="{StaticResource MutedBrush}"/>
+              </Grid>
+            </Border>
+
+            <CheckBox Content="Remember the last layout for each program"
+                      IsChecked="{Binding RememberPerProgram}"
+                      Margin="0,14,0,0"/>
+            <TextBlock Style="{StaticResource Hint}" Margin="26,4,0,0"
+                       Text="Saved by .exe name in %AppData%\BorderFree\settings.json. Choosing a remembered program fills its layout. It is not applied until you click, unless auto-apply is on below."/>
+          </StackPanel>
+
+          <StackPanel Grid.Column="2">
+            <TextBlock Text="{Binding LayoutHeading}" Style="{StaticResource SectionLabel}"/>
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="10"/>
+                <RowDefinition Height="Auto"/>
+              </Grid.RowDefinitions>
+
+              <Button Grid.Row="0" Grid.Column="0" Style="{StaticResource PresetCard}"
+                      Command="{Binding ApplyPresetCommand}"
+                      CommandParameter="{x:Static layout:LayoutPreset.Centered16x9}"
+                      ToolTip="Largest 16:9 frame that fits, centered.">
+                <StackPanel>
+                  <Border Width="54" Height="30" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.25" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+                  <TextBlock Text="16:9 centered" FontWeight="SemiBold"/>
+                  <TextBlock Text="{Binding Size16x9}" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
+                </StackPanel>
+              </Button>
+              <Button Grid.Row="0" Grid.Column="2" Style="{StaticResource PresetCard}"
+                      Command="{Binding ApplyPresetCommand}"
+                      CommandParameter="{x:Static layout:LayoutPreset.Centered21x9}"
+                      ToolTip="Largest exact 21:9 frame that fits, centered.">
+                <StackPanel>
+                  <Border Width="62" Height="26" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.25" HorizontalAlignment="Left" Margin="0,2,0,10"/>
+                  <TextBlock Text="21:9 centered" FontWeight="SemiBold"/>
+                  <TextBlock Text="{Binding Size21x9}" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
+                </StackPanel>
+              </Button>
+              <Button Grid.Row="0" Grid.Column="4" Style="{StaticResource PresetCard}"
+                      Command="{Binding ApplyPresetCommand}"
+                      CommandParameter="{x:Static layout:LayoutPreset.Full32x9}"
+                      ToolTip="The entire selected display. On a 32:9 panel this is the full frame.">
+                <StackPanel>
+                  <Border Width="68" Height="20" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.25" HorizontalAlignment="Left" Margin="0,5,0,13"/>
+                  <TextBlock Text="Full 32:9" FontWeight="SemiBold"/>
+                  <TextBlock Text="{Binding SizeFull}" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
+                </StackPanel>
+              </Button>
+
+              <Grid Grid.Row="2" Grid.ColumnSpan="5">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="10"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0" Style="{StaticResource PresetCard}"
+                        Command="{Binding ApplyPresetCommand}"
+                        CommandParameter="{x:Static layout:LayoutPreset.LeftHalf}"
+                        ToolTip="Left half of the display. On a 32:9 panel this is exactly 16:9.">
+                  <StackPanel>
+                    <Grid Width="68" Height="22" HorizontalAlignment="Left" Margin="0,4,0,12">
+                      <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1"/>
+                      <Border Background="{StaticResource AccentBrush}" HorizontalAlignment="Left" Width="34"/>
+                    </Grid>
+                    <TextBlock Text="Left half" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding SizeLeft}" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
+                  </StackPanel>
+                </Button>
+                <Button Grid.Column="2" Style="{StaticResource PresetCard}"
+                        Command="{Binding ApplyPresetCommand}"
+                        CommandParameter="{x:Static layout:LayoutPreset.RightHalf}"
+                        ToolTip="Right half of the display. On a 32:9 panel this is exactly 16:9.">
+                  <StackPanel>
+                    <Grid Width="68" Height="22" HorizontalAlignment="Left" Margin="0,4,0,12">
+                      <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="1"/>
+                      <Border Background="{StaticResource AccentBrush}" HorizontalAlignment="Right" Width="34"/>
+                    </Grid>
+                    <TextBlock Text="Right half" FontWeight="SemiBold"/>
+                    <TextBlock Text="{Binding SizeRight}" Style="{StaticResource Hint}" Margin="0,3,0,0"/>
+                  </StackPanel>
+                </Button>
+              </Grid>
+            </Grid>
+
+            <Button Content="Restore window borders"
+                    Command="{Binding RestoreCommand}"
+                    Style="{StaticResource QuietButton}"
+                    HorizontalAlignment="Left"
+                    Margin="0,12,0,0"/>
+            <TextBlock Text="{Binding HotkeySummary}" Style="{StaticResource Hint}" Margin="0,12,0,0"/>
+          </StackPanel>
+        </Grid>
+
+        <ToggleButton Content="Advanced" IsChecked="{Binding IsAdvancedOpen}" Style="{StaticResource DisclosureButton}" Margin="0,16,6,0" HorizontalAlignment="Left"/>
+
+        <StackPanel Margin="0,4,6,8" Visibility="{Binding IsAdvancedOpen, Converter={StaticResource BoolToVis}}">
+          <TextBlock Text="Monitor" Style="{StaticResource SectionLabel}"/>
+          <ComboBox ItemsSource="{Binding Monitors}"
+                    SelectedItem="{Binding SelectedMonitor}"
+                    DisplayMemberPath="Label"
+                    HorizontalAlignment="Stretch"/>
+          <TextBlock Style="{StaticResource Hint}" Margin="0,6,0,0"
+                     Text="Layouts use the primary display until you pick another. Sizes are physical pixels, so they stay correct at any per-monitor scale."/>
+
+          <CheckBox Content="Size from the work area, leaving the taskbar uncovered"
+                    IsChecked="{Binding UseWorkArea}"
+                    Margin="0,16,0,0"/>
+          <TextBlock Style="{StaticResource Hint}" Margin="26,4,0,0"
+                     Text="Off by default. Borderless frames use the full panel, including the space behind the taskbar."/>
+
+          <TextBlock Text="Custom rectangle" Style="{StaticResource SectionLabel}" Margin="0,18,0,8"/>
+          <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,10"
+                     Text="Physical pixels on the virtual screen. A display to the left of the primary one has a negative X. Applying a preset fills these boxes so you can nudge them."/>
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="10"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="10"/>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="10"/>
+              <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+              <TextBlock Text="X" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding CustomX, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="Y" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding CustomY, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="4">
+              <TextBlock Text="Width" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding CustomWidth, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+            <StackPanel Grid.Column="6">
+              <TextBlock Text="Height" Style="{StaticResource FieldLabel}"/>
+              <TextBox Text="{Binding CustomHeight, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+          </Grid>
+          <Button Content="Apply custom size" Command="{Binding ApplyCustomCommand}" Style="{StaticResource AccentButton}" HorizontalAlignment="Left" Margin="0,12,0,0"/>
+
+          <TextBlock Text="Shortcuts" Style="{StaticResource SectionLabel}" Margin="0,22,0,4"/>
+          <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,8"
+                     Text="These run while BorderFree is open, including while a game is in front. Click one, then press the new keys. Escape cancels."/>
+          <Grid Margin="0,4,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="160"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="8"/>
+              <RowDefinition Height="Auto"/>
+              <RowDefinition Height="8"/>
+              <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Grid.Column="0" VerticalAlignment="Center">
+              <TextBlock Text="Next layout"/>
+              <TextBlock Text="Cycles forward and applies it" Style="{StaticResource Hint}"/>
+            </StackPanel>
+            <Button Grid.Row="0" Grid.Column="1" Content="{Binding NextHotkeyLabel}" Command="{Binding BeginRecordHotkeyCommand}" CommandParameter="next" Style="{StaticResource QuietButton}"/>
+            <StackPanel Grid.Row="2" Grid.Column="0" VerticalAlignment="Center">
+              <TextBlock Text="Previous layout"/>
+              <TextBlock Text="Cycles backward and applies it" Style="{StaticResource Hint}"/>
+            </StackPanel>
+            <Button Grid.Row="2" Grid.Column="1" Content="{Binding PreviousHotkeyLabel}" Command="{Binding BeginRecordHotkeyCommand}" CommandParameter="previous" Style="{StaticResource QuietButton}"/>
+            <StackPanel Grid.Row="4" Grid.Column="0" VerticalAlignment="Center">
+              <TextBlock Text="Reapply"/>
+              <TextBlock Text="Puts the current layout back" Style="{StaticResource Hint}"/>
+            </StackPanel>
+            <Button Grid.Row="4" Grid.Column="1" Content="{Binding ReapplyHotkeyLabel}" Command="{Binding BeginRecordHotkeyCommand}" CommandParameter="reapply" Style="{StaticResource QuietButton}"/>
+          </Grid>
+
+          <CheckBox Content="When a remembered program opens, apply its layout once"
+                    IsChecked="{Binding AutoApplyOnDetect}"
+                    IsEnabled="{Binding IsAutoApplyEnabled}"
+                    Margin="0,20,0,0"/>
+          <TextBlock Style="{StaticResource Hint}" Margin="26,4,0,0"
+                     Text="Off by default. Skips windows smaller than 320×240, and only touches each window once per time it is open. BorderFree has to be running."/>
+
+          <CheckBox Content="If a placed window jumps to another monitor, move it back"
+                    IsChecked="{Binding SafeguardWrongMonitor}"
+                    Margin="0,14,0,0"/>
+          <TextBlock Style="{StaticResource Hint}" Margin="26,4,0,0" Foreground="{StaticResource FaintBrush}"
+                     Text="Off by default. Only windows BorderFree has already placed in this session are moved, and only when they land on a different display."/>
+
+          <StackPanel Margin="0,18,0,0" Visibility="{Binding ShowElevationPrompt, Converter={StaticResource BoolToVis}}">
+            <Button Content="Restart as administrator" Command="{Binding RestartElevatedCommand}" Style="{StaticResource QuietButton}" HorizontalAlignment="Left"/>
+            <TextBlock Style="{StaticResource Hint}" Margin="0,6,0,0"
+                       Text="Needed only when the game itself is running elevated. Windows blocks a normal program from moving an administrator window."/>
+          </StackPanel>
+          <TextBlock Text="Running as administrator." Margin="0,18,0,0" Foreground="{StaticResource MutedBrush}"
+                     Visibility="{Binding IsElevated, Converter={StaticResource BoolToVis}}"/>
+
+          <TextBlock Style="{StaticResource Hint}" Margin="0,16,0,0"
+                     Text="Games in exclusive fullscreen have to be switched to windowed or borderless in their own options first. BorderFree cannot change an exclusive flip-model swap chain."/>
+          <TextBlock Style="{StaticResource Hint}" Margin="0,6,0,0" Text="{Binding SettingsPath, StringFormat=Settings file: {0}}"/>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+  </DockPanel>
+</Window>

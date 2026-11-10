@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.17763.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BorderFree</RootNamespace>
+    <AssemblyName>BorderFree</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\BorderFree.ico</ApplicationIcon>
+    <Description>Borderless window layouts for super-ultrawide monitors.</Description>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BorderFree.Core\BorderFree.Core.csproj" />
+    <ProjectReference Include="..\BorderFree.Platform\BorderFree.Platform.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\BorderFree.ico" />
+  </ItemGroup>
+
+</Project>
