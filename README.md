@@ -1,5 +1,9 @@
 # BorderFree
 
+## Download
+
+Go to [Releases](https://github.com/mintree/BorderFree/releases/latest) and download `BorderFree-v1.0.0-win-x64.exe`, then run it. No install and no .NET needed, on Windows 10/11 64-bit. Because the EXE is unsigned, SmartScreen may show "Windows protected your PC"; click More info, then Run anyway. If a game runs as administrator, BorderFree must also run as administrator (right-click, Run as administrator), or Windows blocks it from moving that game's window. Settings are saved to `%AppData%\BorderFree`.
+
 BorderFree puts any running window into a borderless frame on a 32:9 monitor. A lot of games still size themselves as 16:9 or 21:9, or open on the wrong display. Pick the window, pick a layout, and BorderFree strips the caption and moves it.
 
 It runs on Windows 10 version 1809 (build 17763) and Windows 11. The window is per-monitor DPI aware (Per-Monitor V2), and every size is in physical pixels.
