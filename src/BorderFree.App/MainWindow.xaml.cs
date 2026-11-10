@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
 using System.Windows.Input;
@@ -14,16 +15,33 @@ public partial class MainWindow : Window
 {
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _watch;
+    private readonly bool _startHidden;
+    private TrayIconHost? _tray;
     private nint _hwnd;
+    private bool _exitRequested;
     private DateTime _lastRefreshUtc = DateTime.MinValue;
 
-    public MainWindow()
+    public MainWindow(bool startHidden = false)
     {
+        _startHidden = startHidden;
+        if (startHidden)
+        {
+            ShowActivated = false;
+            ShowInTaskbar = false;
+            Opacity = 0;
+        }
+
         InitializeComponent();
 
         var store = new SettingsStore(SettingsStore.DefaultFilePath);
         var loaded = store.Load();
-        _viewModel = new MainViewModel(store, new WindowController(), loaded.Settings, loaded.Warning);
+        _viewModel = new MainViewModel(
+            store,
+            new WindowController(),
+            loaded.Settings,
+            loaded.Warning,
+            new StartupRegistration(),
+            Environment.ProcessPath);
         DataContext = _viewModel;
 
         try
@@ -45,11 +63,28 @@ public partial class MainWindow : Window
 
         SourceInitialized += OnSourceInitialized;
         Activated += OnActivated;
+        Closing += OnClosing;
         Closed += OnClosed;
         PreviewKeyDown += OnPreviewKeyDown;
     }
 
     public void ReportFailure(string message) => _viewModel.ReportFailure(message);
+
+    public void ShowFromTray()
+    {
+        ShowInTaskbar = true;
+        Opacity = 1;
+        if (WindowState == WindowState.Minimized)
+            WindowState = WindowState.Normal;
+        Show();
+        Activate();
+    }
+
+    public void ExitApplication()
+    {
+        _exitRequested = true;
+        Close();
+    }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
     {
@@ -62,6 +97,16 @@ public partial class MainWindow : Window
         WindowController.TryUseDarkTitleBar(_hwnd);
         _viewModel.AttachHotkeyWindow(_hwnd);
         _watch.Start();
+        _tray ??= new TrayIconHost(
+            _hwnd,
+            () => Dispatcher.BeginInvoke(ShowFromTray),
+            () => Dispatcher.BeginInvoke(() => _viewModel.OnHotkey(MainViewModel.HotkeyReapplyId)),
+            () => Dispatcher.BeginInvoke(ExitApplication));
+        if (_startHidden)
+        {
+            Hide();
+            ShowInTaskbar = false;
+        }
     }
 
     private void OnActivated(object? sender, EventArgs e)
@@ -81,14 +126,34 @@ public partial class MainWindow : Window
         }
     }
 
+    private void OnClosing(object? sender, CancelEventArgs e)
+    {
+        if (_exitRequested)
+            return;
+
+        // Closing the window always hides to the tray. Exit on the tray menu quits.
+        e.Cancel = true;
+        Hide();
+        ShowInTaskbar = false;
+    }
+
     private void OnClosed(object? sender, EventArgs e)
     {
         _watch.Stop();
         _viewModel.DetachHotkeys();
+        _tray?.Dispose();
+        _tray = null;
+        System.Windows.Application.Current?.Shutdown();
     }
 
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
     {
+        if (_tray?.HandleMessage(msg, lParam) == true)
+        {
+            handled = true;
+            return 0;
+        }
+
         const int wmHotkey = 0x0312;
         if (msg == wmHotkey)
         {

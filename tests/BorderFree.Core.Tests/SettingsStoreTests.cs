@@ -27,6 +27,8 @@ public class SettingsStoreTests : IDisposable
         Assert.False(loaded.Settings.AutoApplyOnDetect);
         Assert.False(loaded.Settings.SafeguardWrongMonitor);
         Assert.False(loaded.Settings.UseWorkArea);
+        Assert.False(loaded.Settings.StartWithWindows);
+        Assert.Equal(2, loaded.Settings.Version);
         Assert.Null(loaded.Settings.MonitorDeviceName);
         Assert.Equal("Ctrl+Alt+F11", loaded.Settings.Hotkeys.NextPreset);
         Assert.Empty(loaded.Settings.Programs);
@@ -124,6 +126,24 @@ public class SettingsStoreTests : IDisposable
         Assert.NotNull(profile);
         Assert.Equal(LayoutPreset.Centered21x9, profile.Preset);
         Assert.Equal(@"\\.\DISPLAY1", profile.MonitorDeviceName);
+        Assert.False(loaded.Settings.StartWithWindows);
+        Assert.Equal(2, loaded.Settings.Version);
+    }
+
+    [Fact]
+    public void StartWithWindows_RoundTrips_AndOldFilesStayOff()
+    {
+        var path = Path.Combine(_directory, "settings.json");
+        var store = new SettingsStore(path);
+        var settings = new AppSettings { StartWithWindows = true };
+
+        store.Save(settings);
+        var loaded = store.Load();
+
+        Assert.True(loaded.Settings.StartWithWindows);
+        Assert.Equal(2, loaded.Settings.Version);
+        Assert.Contains("\"startWithWindows\": true", File.ReadAllText(path), StringComparison.Ordinal);
+        Assert.Contains("\"version\": 2", File.ReadAllText(path), StringComparison.Ordinal);
     }
 
     [Fact]

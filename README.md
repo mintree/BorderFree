@@ -2,7 +2,7 @@
 
 ## Download
 
-Go to [Releases](https://github.com/mintree/BorderFree/releases/latest) and download `BorderFree-v1.0.0-win-x64.exe`, then run it. No install and no .NET needed, on Windows 10/11 64-bit. Because the EXE is unsigned, SmartScreen may show "Windows protected your PC"; click More info, then Run anyway. If a game runs as administrator, BorderFree must also run as administrator (right-click, Run as administrator), or Windows blocks it from moving that game's window. Settings are saved to `%AppData%\BorderFree`.
+Go to [Releases](https://github.com/mintree/BorderFree/releases/latest) and download `BorderFree-v1.1.0-win-x64.exe`, then run it. No install and no .NET needed, on Windows 10/11 64-bit. Because the EXE is unsigned, SmartScreen may show "Windows protected your PC"; click More info, then Run anyway. If a game runs as administrator, BorderFree must also run as administrator (right-click, Run as administrator), or Windows blocks it from moving that game's window. Settings are saved to `%AppData%\BorderFree`.
 
 BorderFree puts any running window into a borderless frame on a 32:9 monitor. A lot of games still size themselves as 16:9 or 21:9, or open on the wrong display. Pick the window, pick a layout, and BorderFree strips the caption and moves it.
 
@@ -59,6 +59,16 @@ These are global while BorderFree is open, including when a game is in front. Ch
 
 The cycle is 16:9 centered, 21:9 centered, full display, left half, right half, then back to the start. A hotkey targets the foreground window. If the foreground window is BorderFree itself, it targets the window selected in the list.
 
+### Start with Windows
+
+**Start with Windows** is off by default, under Advanced. Turning it on writes `BorderFree` to `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` with the quoted path of this EXE and `--minimized`. No administrator prompt is involved. The checkbox shows the registry entry itself, not only the saved setting. If you move the EXE, the next start rewrites that path while the setting stays on.
+
+Windows then starts BorderFree hidden in the notification area, with hotkeys and auto-apply still running. Double-click the tray icon, or choose Open, to show the window. Reapply layout on that menu runs the same action as the reapply shortcut. Closing the window always hides BorderFree to the tray instead of quitting. Exit on the tray menu is what quits.
+
+The Run key does not start BorderFree as administrator. A game that runs as administrator still needs BorderFree started with Run as administrator, or Windows blocks it from moving that game's window.
+
+On a Windows PC, `scripts/verify-startup.ps1` reads the Run value, launches that command, and checks that BorderFree is running with no visible main window.
+
 ### Monitors
 
 The monitor picker is under Advanced. Labels include the origin and the scale, for example `Primary — 5120×1440 at 0, 0 · 100%`. Layout math uses the physical pixels from the monitor, which is what `SetWindowPos` expects from a Per-Monitor V2 process.
@@ -74,7 +84,7 @@ Custom X, Y, width, and height are physical pixels on the virtual screen. A disp
 - **Exclusive fullscreen** has to be switched to windowed or borderless in the game first.
 - **Elevated games** cannot be moved by a normal process. Windows blocks it (error 5). Restart BorderFree as administrator from Advanced, or start it elevated yourself. The app does not request administrator rights on every launch.
 - Restore cannot recover a frame from a previous run of BorderFree.
-- Global shortcuts only work while BorderFree is running. Minimizing the window is enough; closing it unregisters them.
+- Global shortcuts only work while BorderFree is running. Closing the window hides it to the notification area and leaves them registered. Exit on the tray icon quits and unregisters them.
 
 ## Build
 
@@ -127,11 +137,12 @@ dotnet test
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "rememberPerProgram": true,
   "autoApplyOnDetect": false,
   "safeguardWrongMonitor": false,
   "useWorkArea": false,
+  "startWithWindows": false,
   "monitorDeviceName": "\\\\.\\DISPLAY1",
   "hotkeys": {
     "nextPreset": "Ctrl+Alt+F11",
@@ -148,7 +159,7 @@ dotnet test
 }
 ```
 
-`preset` is one of `Centered16x9`, `Centered21x9`, `Full32x9`, `LeftHalf`, `RightHalf`, or `Custom`. A custom layout stores `custom` as `{ "x", "y", "width", "height" }`.
+`preset` is one of `Centered16x9`, `Centered21x9`, `Full32x9`, `LeftHalf`, `RightHalf`, or `Custom`. A custom layout stores `custom` as `{ "x", "y", "width", "height" }`. A version 1 file has no `startWithWindows` field; it still loads, and that option stays off until you turn it on.
 
 ## Project layout
 
@@ -157,6 +168,7 @@ BorderFree.sln
 src/BorderFree.Core/        preset math, hotkeys, settings (no Win32)
 src/BorderFree.Platform/    Win32 window, monitor, and hotkey calls
 src/BorderFree.App/         WPF window
+scripts/verify-startup.ps1  Windows check for the Run key and a hidden start
 tests/BorderFree.Core.Tests/
 ```
 

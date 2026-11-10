@@ -1,4 +1,5 @@
 using System.Threading;
+using BorderFree.Core.Startup;
 
 namespace BorderFree;
 
@@ -14,7 +15,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(System.Windows.StartupEventArgs e)
     {
-        ShutdownMode = System.Windows.ShutdownMode.OnMainWindowClose;
+        ShutdownMode = System.Windows.ShutdownMode.OnExplicitShutdown;
 
         var created = false;
         try
@@ -51,7 +52,10 @@ public partial class App : System.Windows.Application
 
         DispatcherUnhandledException += OnDispatcherUnhandledException;
 
-        var window = new MainWindow();
+        var startHidden = LaunchArguments.ShouldStartHidden(
+            LaunchArguments.RequestsMinimized(e.Args),
+            startWithWindows: false);
+        var window = new MainWindow(startHidden);
         MainWindow = window;
         window.Show();
         base.OnStartup(e);
@@ -91,12 +95,8 @@ public partial class App : System.Windows.Application
 
             Dispatcher.BeginInvoke(() =>
             {
-                if (MainWindow is not System.Windows.Window window)
-                    return;
-                if (window.WindowState == System.Windows.WindowState.Minimized)
-                    window.WindowState = System.Windows.WindowState.Normal;
-                window.Show();
-                window.Activate();
+                if (MainWindow is global::BorderFree.MainWindow shell)
+                    shell.ShowFromTray();
             });
         }
     }

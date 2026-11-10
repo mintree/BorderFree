@@ -8,7 +8,7 @@ public readonly record struct LoadResult(AppSettings Settings, bool RecoveredFro
 
 public sealed class SettingsStore
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -108,8 +108,9 @@ public sealed class SettingsStore
 
     private static void Normalize(AppSettings settings)
     {
-        if (settings.Version <= 0)
-            settings.Version = CurrentVersion;
+        // Version 1 files omit StartWithWindows. Missing bools stay false, then the file
+        // is marked current so the next save records the new schema.
+        settings.Version = CurrentVersion;
 
         settings.Hotkeys ??= new HotkeySettings();
         settings.Programs = RebuildPrograms(settings.Programs);

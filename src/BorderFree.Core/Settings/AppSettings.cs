@@ -53,6 +53,12 @@ public sealed class AppSettings
     public bool UseWorkArea { get; set; }
 
     /// <summary>
+    /// When true, BorderFree writes its Run key so Windows starts it minimized.
+    /// Off by default. The checkbox follows the registry, and this flag is updated to match.
+    /// </summary>
+    public bool StartWithWindows { get; set; }
+
+    /// <summary>
     /// Null means the primary display.
     /// </summary>
     public string? MonitorDeviceName { get; set; }

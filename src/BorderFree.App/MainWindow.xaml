@@ -278,6 +278,12 @@
             <Button Grid.Row="4" Grid.Column="1" Content="{Binding ReapplyHotkeyLabel}" Command="{Binding BeginRecordHotkeyCommand}" CommandParameter="reapply" Style="{StaticResource QuietButton}"/>
           </Grid>
 
+          <CheckBox Content="Start with Windows"
+                    IsChecked="{Binding StartWithWindows}"
+                    Margin="0,20,0,0"/>
+          <TextBlock Style="{StaticResource Hint}" Margin="26,4,0,0"
+                     Text="Off by default. Windows starts BorderFree minimized to the notification area. Closing the window always hides BorderFree there; Exit on the tray icon quits. This does not run BorderFree as administrator."/>
+
           <CheckBox Content="When a remembered program opens, apply its layout once"
                     IsChecked="{Binding AutoApplyOnDetect}"
                     IsEnabled="{Binding IsAutoApplyEnabled}"

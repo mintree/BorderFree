@@ -7,6 +7,7 @@ using BorderFree.Core.Geometry;
 using BorderFree.Core.Hotkeys;
 using BorderFree.Core.Layout;
 using BorderFree.Core.Settings;
+using BorderFree.Core.Startup;
 using BorderFree.Platform;
 
 namespace BorderFree.ViewModels;
@@ -27,6 +28,8 @@ public sealed class MainViewModel : ViewModelBase
     private readonly SettingsStore _store;
     private readonly WindowController _controller;
     private readonly AppSettings _settings;
+    private readonly IStartupStore _startup;
+    private readonly string? _executablePath;
     private readonly ObservableCollection<WindowRow> _windows = new();
     private readonly Dictionary<nint, ManagedWindow> _managed = new();
     private readonly HashSet<nint> _autoApplied = new();
@@ -56,12 +59,21 @@ public sealed class MainViewModel : ViewModelBase
     private string _customWidth = "";
     private string _customHeight = "";
     private bool _hasVisibleWindows;
+    private bool _startWithWindows;
 
-    public MainViewModel(SettingsStore store, WindowController controller, AppSettings settings, string? loadWarning)
+    public MainViewModel(
+        SettingsStore store,
+        WindowController controller,
+        AppSettings settings,
+        string? loadWarning,
+        IStartupStore startup,
+        string? executablePath)
     {
         _store = store;
         _controller = controller;
         _settings = settings;
+        _startup = startup;
+        _executablePath = executablePath;
         WindowsView = CollectionViewSource.GetDefaultView(_windows);
         WindowsView.Filter = FilterWindow;
 
@@ -87,6 +99,8 @@ public sealed class MainViewModel : ViewModelBase
         RestoreCommand = new RelayCommand(RestoreSelected, () => CanRestore);
         BeginRecordHotkeyCommand = new RelayCommand(parameter => BeginRecordHotkey(parameter as string));
         RestartElevatedCommand = new RelayCommand(RestartElevated);
+
+        AlignStartupRegistration();
 
         if (!string.IsNullOrEmpty(loadWarning))
             SetStatus(loadWarning, StatusTone.Error);
@@ -278,6 +292,46 @@ public sealed class MainViewModel : ViewModelBase
             OnPropertyChanged();
             OnPropertyChanged(nameof(NeedsWatch));
             SaveSettings();
+        }
+    }
+
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set
+        {
+            if (_startWithWindows == value)
+                return;
+
+            try
+            {
+                if (value)
+                {
+                    if (string.IsNullOrWhiteSpace(_executablePath))
+                        throw new InvalidOperationException("BorderFree couldn't find its own program file.");
+                    StartupLaunch.Enable(_startup, _executablePath);
+                }
+                else
+                {
+                    StartupLaunch.Disable(_startup);
+                }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                SetStatus("Couldn't update the Windows startup entry. " + ex.Message, StatusTone.Error);
+                OnPropertyChanged();
+                return;
+            }
+
+            _startWithWindows = StartupLaunch.ReadToggle(_startup);
+            _settings.StartWithWindows = _startWithWindows;
+            OnPropertyChanged();
+            SaveSettings();
+            SetStatus(
+                _startWithWindows
+                    ? "BorderFree will start with Windows, minimized to the tray."
+                    : "BorderFree will no longer start with Windows.",
+                StatusTone.Info);
         }
     }
 
@@ -531,6 +585,27 @@ public sealed class MainViewModel : ViewModelBase
     }
 
     public void ReportFailure(string message) => SetStatus(message, StatusTone.Error);
+
+    private void AlignStartupRegistration()
+    {
+        try
+        {
+            if (_settings.StartWithWindows && !string.IsNullOrWhiteSpace(_executablePath))
+                StartupLaunch.Reconcile(_startup, startWithWindows: true, _executablePath);
+
+            _startWithWindows = StartupLaunch.ReadToggle(_startup);
+            if (_settings.StartWithWindows == _startWithWindows)
+                return;
+
+            _settings.StartWithWindows = _startWithWindows;
+            SaveSettings();
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            _startWithWindows = false;
+            SetStatus("Couldn't read the Windows startup entry. " + ex.Message, StatusTone.Error);
+        }
+    }
 
     private void Refresh()
     {
