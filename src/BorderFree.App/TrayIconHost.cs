@@ -180,7 +180,7 @@ public sealed class TrayIconHost : IDisposable
         public int Y;
     }
 
-    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    [DllImport("shell32.dll", EntryPoint = "Shell_NotifyIconW", CharSet = CharSet.Unicode)]
     private static extern bool ShellNotifyIcon(int message, ref NotifyIconData data);
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
