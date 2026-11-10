@@ -19,6 +19,7 @@ public partial class MainWindow : Window
     private TrayIconHost? _tray;
     private nint _hwnd;
     private bool _exitRequested;
+    private bool _trayHintShown;
     private DateTime _lastRefreshUtc = DateTime.MinValue;
 
     public MainWindow(bool startHidden = false)
@@ -97,16 +98,57 @@ public partial class MainWindow : Window
         WindowController.TryUseDarkTitleBar(_hwnd);
         _viewModel.AttachHotkeyWindow(_hwnd);
         _watch.Start();
-        _tray ??= new TrayIconHost(
-            _hwnd,
-            () => Dispatcher.BeginInvoke(ShowFromTray),
-            () => Dispatcher.BeginInvoke(() => _viewModel.OnHotkey(MainViewModel.HotkeyReapplyId)),
-            () => Dispatcher.BeginInvoke(ExitApplication));
+        try
+        {
+            _tray ??= new TrayIconHost(
+                _hwnd,
+                () => Dispatcher.BeginInvoke(ShowFromTray),
+                () => Dispatcher.BeginInvoke(() => _viewModel.OnHotkey(MainViewModel.HotkeyReapplyId)),
+                () => Dispatcher.BeginInvoke(ExitApplication));
+        }
+        catch (Exception ex)
+        {
+            AppLog.Write($"Tray: setup threw {ex.GetType().Name}: {ex.Message}");
+            _tray = null;
+        }
+
+        if (_tray != null)
+            _tray.Readded += OnTrayReadded;
+
+        AppLog.Write($"Tray available: {TrayAvailable}.");
+
         if (_startHidden)
         {
-            Hide();
-            ShowInTaskbar = false;
+            if (TrayAvailable)
+            {
+                AppLog.Write("Start hidden: hiding to the tray.");
+                Hide();
+                ShowInTaskbar = false;
+            }
+            else
+            {
+                // No tray icon to come back from, so stay reachable on the taskbar.
+                AppLog.Write("Start hidden: no tray icon, starting minimized to the taskbar instead.");
+                Opacity = 1;
+                ShowInTaskbar = true;
+                WindowState = WindowState.Minimized;
+            }
         }
+    }
+
+    private bool TrayAvailable => _tray?.IsAdded == true;
+
+    private void OnTrayReadded(bool added)
+    {
+        if (added || IsVisible)
+            return;
+
+        // Explorer restarted and the icon couldn't come back. Don't leave the app hidden with no way in.
+        AppLog.Write("Tray: re-add failed while hidden, showing minimized on the taskbar.");
+        Opacity = 1;
+        ShowInTaskbar = true;
+        WindowState = WindowState.Minimized;
+        Show();
     }
 
     private void OnActivated(object? sender, EventArgs e)
@@ -131,10 +173,28 @@ public partial class MainWindow : Window
         if (_exitRequested)
             return;
 
-        // Closing the window always hides to the tray. Exit on the tray menu quits.
+        // Closing never quits; Exit on the tray menu does. Only hide when there is a tray icon to come back from.
         e.Cancel = true;
-        Hide();
-        ShowInTaskbar = false;
+        if (TrayAvailable)
+        {
+            AppLog.Write("Close: hiding to the tray.");
+            Hide();
+            ShowInTaskbar = false;
+            if (!_trayHintShown)
+            {
+                _trayHintShown = true;
+                _tray!.ShowBalloon(
+                    "BorderFree is still running",
+                    "BorderFree is still running. Find it in the tray (click ^ if hidden). Right-click > Exit to quit.");
+            }
+        }
+        else
+        {
+            AppLog.Write("Close: no tray icon, minimizing to the taskbar instead of hiding.");
+            Opacity = 1;
+            ShowInTaskbar = true;
+            WindowState = WindowState.Minimized;
+        }
     }
 
     private void OnClosed(object? sender, EventArgs e)

@@ -2,7 +2,7 @@
 
 ## Download
 
-Go to [Releases](https://github.com/mintree/BorderFree/releases/latest) and download `BorderFree-v1.1.1-win-x64.exe`, then run it. No install and no .NET needed, on Windows 10/11 64-bit. Because the EXE is unsigned, SmartScreen may show "Windows protected your PC"; click More info, then Run anyway. If a game runs as administrator, BorderFree must also run as administrator (right-click, Run as administrator), or Windows blocks it from moving that game's window. Settings are saved to `%AppData%\BorderFree`.
+Go to [Releases](https://github.com/mintree/BorderFree/releases/latest) and download `BorderFree-v1.1.2-win-x64.exe`, then run it. No install and no .NET needed, on Windows 10/11 64-bit. Because the EXE is unsigned, SmartScreen may show "Windows protected your PC"; click More info, then Run anyway. If a game runs as administrator, BorderFree must also run as administrator (right-click, Run as administrator), or Windows blocks it from moving that game's window. Settings are saved to `%AppData%\BorderFree`.
 
 BorderFree puts any running window into a borderless frame on a 32:9 monitor. A lot of games still size themselves as 16:9 or 21:9, or open on the wrong display. Pick the window, pick a layout, and BorderFree strips the caption and moves it.
 
@@ -63,7 +63,7 @@ The cycle is 16:9 centered, 21:9 centered, full display, left half, right half, 
 
 **Start with Windows** is off by default, under Advanced. Turning it on writes `BorderFree` to `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` with the quoted path of this EXE and `--minimized`. No administrator prompt is involved. The checkbox shows the registry entry itself, not only the saved setting. If you move the EXE, the next start rewrites that path while the setting stays on.
 
-Windows then starts BorderFree hidden in the notification area, with hotkeys and auto-apply still running. Double-click the tray icon, or choose Open, to show the window. Reapply layout on that menu runs the same action as the reapply shortcut. Closing the window always hides BorderFree to the tray instead of quitting. Exit on the tray menu is what quits.
+Windows then starts BorderFree hidden in the notification area, with hotkeys and auto-apply still running. Click the tray icon, or right-click it and choose Open, to show the window. Reapply layout on that menu runs the same action as the reapply shortcut. Closing the window hides BorderFree to the tray instead of quitting, and the first time it shows a notification saying where it went. Exit on the tray menu is what quits. If the tray icon couldn't be created, closing (or starting with `--minimized`) minimizes BorderFree to the taskbar instead, so it never disappears without a way back.
 
 The Run key does not start BorderFree as administrator. A game that runs as administrator still needs BorderFree started with Run as administrator, or Windows blocks it from moving that game's window.
 
@@ -78,6 +78,12 @@ Custom X, Y, width, and height are physical pixels on the virtual screen. A disp
 ### If a window jumps to another display
 
 **If a placed window jumps to another monitor, move it back** is off by default, at the bottom of Advanced. Some games reposition themselves after a borderless change and land on a different display. With this on, BorderFree checks a couple of times a second and moves a window back only when `MonitorFromWindow` reports a different display from the one used for that placement. It only watches windows BorderFree has already placed in this session. It is off by default so a window you drag to another monitor stays there.
+
+## Troubleshooting
+
+- **The window disappeared after clicking X.** BorderFree is still running in the notification area. On Windows 11 the icon may be under the **^** arrow next to the clock; drag it onto the taskbar to keep it visible. Right-click it and choose **Exit** to quit.
+- **An older version keeps opening.** Starting a newer BorderFree closes any older copy that is still running (including one hidden in the tray), then takes over. Two copies of the same version from the same file just bring the running one to the front.
+- **Log file.** BorderFree writes a short log to `%AppData%\BorderFree\borderfree.log`: the version and path at startup, whether the tray icon was created (with the Windows error code if not), and what closing the window did. Include it when reporting a problem.
 
 ## Limitations
 
